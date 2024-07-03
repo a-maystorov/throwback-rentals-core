@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import request from "supertest";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, beforeEach } from "vitest";
 import { Genre, IGenre } from "../../src/models/genre";
 import { server } from "../../src/server";
 
@@ -49,6 +49,52 @@ describe("/api/genres", () => {
       const res = await request(server).get("/api/genres/" + id);
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe("POST /", () => {
+    let name: string;
+
+    const exe = async () => {
+      return await request(server).post("/api/genres").send({ name });
+    };
+
+    beforeEach(() => {
+      name = "genre1";
+    });
+
+    // TODO:
+    // it("should return 401 if client is not loggend in", async () => {});
+
+    it("should return 400 if genre is less than 3 characters", async () => {
+      name = "ab";
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if genre is more than 50 characters", async () => {
+      name = new Array(52).join("a");
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should save the genre if it is valid", async () => {
+      await exe();
+
+      const genre = await Genre.find({ name: "genre1" });
+
+      expect(genre).not.toBeNull();
+    });
+
+    it("should return the genre if it is valid", async () => {
+      const res = await exe();
+
+      expect(res.body).toHaveProperty("_id");
+      expect(res.body).toHaveProperty("name", "genre1");
     });
   });
 });
