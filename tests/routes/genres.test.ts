@@ -167,4 +167,56 @@ describe("/api/genres", () => {
       expect(res.body).toHaveProperty("name", newName);
     });
   });
+
+  describe("DELETE /:id", () => {
+    let genre: InstanceType<typeof Genre>;
+    let id: string;
+
+    const exe = async () => {
+      return await request(server)
+        .delete("/api/genres/" + id)
+        .send();
+    };
+
+    beforeEach(async () => {
+      genre = new Genre({ name: "genre1" });
+      await genre.save();
+
+      id = genre._id.toHexString();
+    });
+
+    // TODO:
+    // it("should return 403 if the user is not an admin", async () => {});
+
+    it("should return 404 if id is invalid", async () => {
+      id = "12";
+
+      const res = await exe();
+
+      expect(res.status).toBe(404);
+    });
+
+    it("should return 404 if no genre with the given id was found", async () => {
+      id = new mongoose.Types.ObjectId().toHexString();
+
+      const res = await exe();
+
+      expect(res.status).toBe(404);
+    });
+
+    it("should delete the genre if input is valid", async () => {
+      await exe();
+
+      const genreInDb = await Genre.findById(id);
+
+      expect(genreInDb).toBeNull();
+    });
+
+    it("should return the removed genre", async () => {
+      const res = await exe();
+
+      expect(res.body).toHaveProperty("_id", genre._id.toHexString());
+      expect(res.body).toHaveProperty("name", genre.name);
+    });
+  });
 });
