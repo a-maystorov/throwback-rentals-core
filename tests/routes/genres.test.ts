@@ -97,4 +97,74 @@ describe("/api/genres", () => {
       expect(res.body).toHaveProperty("name", "genre1");
     });
   });
+
+  describe("PUT /:id", () => {
+    let genre: InstanceType<typeof Genre>;
+    let newName: string;
+    let id: string;
+
+    const exe = async () => {
+      return await request(server)
+        .put("/api/genres/" + id)
+        .send({ name: newName });
+    };
+
+    beforeEach(async () => {
+      genre = new Genre({ name: "genre1" });
+      await genre.save();
+
+      id = genre._id.toHexString();
+      newName = "updatedName";
+    });
+
+    // TODO:
+    // it("should return 401 if client is not logged in", async () => {});
+
+    it("should return 400 if genre is less than 3 characters", async () => {
+      newName = "ab";
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if genre is more than 50 characters", async () => {
+      newName = new Array(52).join("a");
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 404 if id is invalid", async () => {
+      id = "12";
+
+      const res = await exe();
+
+      expect(res.status).toBe(404);
+    });
+
+    it("should return 404 if genre with the given id was not found", async () => {
+      id = new mongoose.Types.ObjectId().toHexString();
+
+      const res = await exe();
+
+      expect(res.status).toBe(404);
+    });
+
+    it("should update the genre if input is valid", async () => {
+      await exe();
+
+      const updatedGenre = await Genre.findById(genre._id);
+
+      expect(updatedGenre!.name).toBe(newName);
+    });
+
+    it("should return the updated genre if it is valid", async () => {
+      const res = await exe();
+
+      expect(res.body).toHaveProperty("_id");
+      expect(res.body).toHaveProperty("name", newName);
+    });
+  });
 });
