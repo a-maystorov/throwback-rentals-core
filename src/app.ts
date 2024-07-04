@@ -1,12 +1,12 @@
 import express from "express";
 import genres from "./routes/genres";
-import userRoutes from "./routes/user";
+import customers from "./routes/customers";
 
 const app = express();
 
 app.use(express.json());
 
-app.use("/api/users", userRoutes);
 app.use("/api/genres", genres);
+app.use("/api/customers", customers);
 
 export default app;
