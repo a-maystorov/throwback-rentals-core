@@ -3,8 +3,8 @@ import { Schema, model } from "mongoose";
 
 interface ICustomer {
   name: string;
-  isGold?: boolean;
   phone: string;
+  isGold?: boolean;
 }
 
 const customerSchema = new Schema<ICustomer>({
@@ -15,16 +15,16 @@ const customerSchema = new Schema<ICustomer>({
     maxlength: 20,
   },
 
-  isGold: {
-    type: Boolean,
-    default: false,
-  },
-
   phone: {
     type: String,
     required: true,
     minlength: 6,
     maxlength: 20,
+  },
+
+  isGold: {
+    type: Boolean,
+    default: false,
   },
 });
 
