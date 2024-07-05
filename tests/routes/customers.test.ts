@@ -135,4 +135,103 @@ describe("/api/customers", () => {
       expect(res.body).toHaveProperty("isGold", false);
     });
   });
+
+  describe("PUT /:id", () => {
+    let customer: InstanceType<typeof Customer>;
+    let newName: string;
+    let newPhone: string;
+    let newGoldStatus: boolean;
+    let id: string;
+
+    const exe = async () => {
+      return await request(server)
+        .put("/api/customers/" + id)
+        .send({ name: newName, phone: newPhone, isGold: newGoldStatus });
+    };
+
+    beforeEach(async () => {
+      customer = new Customer({
+        name: "customer1",
+        phone: "123456",
+        isGold: false,
+      });
+
+      await customer.save();
+
+      id = customer._id.toHexString();
+      newName = "updatedName";
+      newPhone = "654321";
+      newGoldStatus = true;
+    });
+
+    // TODO:
+    // it("should return 401 if user is not logged in", async () => {});
+
+    it("should return 400 if name is less than 3 characters", async () => {
+      newName = "ab";
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if name is more than 20 characters", async () => {
+      newName = "a".repeat(21);
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if phone is less than 6 characters", async () => {
+      newPhone = "12345";
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if phone is more than 20 characters", async () => {
+      newPhone = "1".repeat(21);
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 404 if id is invalid", async () => {
+      id = "1";
+
+      const res = await exe();
+
+      expect(res.status).toBe(404);
+    });
+
+    it("should return 404 if customer with the given id was not found", async () => {
+      id = new mongoose.Types.ObjectId().toHexString();
+
+      const res = await exe();
+
+      expect(res.status).toBe(404);
+    });
+
+    it("should update the customer if input is valid", async () => {
+      await exe();
+
+      const updatedCustomer = await Customer.findById(customer._id);
+
+      expect(updatedCustomer!.name).toBe(newName);
+      expect(updatedCustomer!.phone).toBe(newPhone);
+      expect(updatedCustomer!.isGold).toBe(newGoldStatus);
+    });
+
+    it("should return the updated customer if it is valid", async () => {
+      const res = await exe();
+
+      expect(res.body).toHaveProperty("_id");
+      expect(res.body).toHaveProperty("name", newName);
+      expect(res.body).toHaveProperty("phone", newPhone);
+      expect(res.body).toHaveProperty("isGold", newGoldStatus);
+    });
+  });
 });
