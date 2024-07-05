@@ -1,6 +1,6 @@
-import { Router, Request } from "express";
-import { Customer } from "../models/customer";
+import { Request, Router } from "express";
 import validateObjectId from "../middleware/validateObjectId";
+import { Customer, validateCustomer } from "../models/customer";
 
 interface CustomerRequest extends Request {
   params: {
@@ -29,6 +29,24 @@ router.get("/:id", validateObjectId, async (req: CustomerRequest, res) => {
       .status(404)
       .send("The customer with the given ID was not found.");
   }
+
+  res.send(customer);
+});
+
+router.post("/", async (req: CustomerRequest, res) => {
+  const { error } = validateCustomer(req.body);
+
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+
+  const customer = new Customer({
+    name: req.body.name,
+    phone: req.body.phone,
+    isGold: req.body.isGold,
+  });
+
+  await customer.save();
 
   res.send(customer);
 });

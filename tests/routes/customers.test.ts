@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, beforeEach } from "vitest";
 import { Customer, ICustomer } from "../../src/models/customer";
 import { server } from "../../src/server";
 
-describe("/api/genres", () => {
+describe("/api/customers", () => {
   afterEach(async () => {
     server.close();
     await Customer.deleteMany({});
@@ -65,6 +65,74 @@ describe("/api/genres", () => {
       const res = await request(server).get("/api/customers/" + id);
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe("POST /", () => {
+    let name: string;
+    let phone: string;
+    let isGold: boolean;
+
+    const exe = async () => {
+      return await request(server).post("/api/customers").send({ name, phone });
+    };
+
+    beforeEach(() => {
+      name = "customer1";
+      phone = "123456";
+      isGold = false;
+    });
+
+    // TODO:
+    // it("should return 401 if user is not loggend in", async () => {});
+
+    it("should return 400 if name is less than 3 characters", async () => {
+      name = "ab";
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if name is more than 20 characters", async () => {
+      name = "a".repeat(21);
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if phone is less than 6 characters", async () => {
+      phone = "12345";
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should return 400 if phone is more than 20 characters", async () => {
+      phone = "1".repeat(21);
+
+      const res = await exe();
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should save the customer if it is valid", async () => {
+      await exe();
+
+      const customer = await Customer.find({ name: "customer1" });
+
+      expect(customer).not.toBeNull();
+    });
+
+    it("should return the customer if it is valid", async () => {
+      const res = await exe();
+
+      expect(res.body).toHaveProperty("_id");
+      expect(res.body).toHaveProperty("name", "customer1");
+      expect(res.body).toHaveProperty("phone", "123456");
+      expect(res.body).toHaveProperty("isGold", false);
     });
   });
 });
