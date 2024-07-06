@@ -1,10 +1,9 @@
 import Joi from "joi";
-import { model, Schema } from "mongoose";
-import { genreSchema, IGenre } from "./genre";
+import { model, Schema, Document, Types } from "mongoose";
 
-interface IGame {
+interface IGame extends Document {
   title: string;
-  genre: IGenre;
+  genreId: Types.ObjectId;
   numberInStock: number;
   dailyRentalRate: number;
   purchasePrice: number;
@@ -17,10 +16,13 @@ const gameSchema = new Schema<IGame>({
     trim: true,
     minlength: 3,
     maxlength: 255,
+    index: true,
+    unique: true,
   },
 
-  genre: {
-    type: genreSchema,
+  genreId: {
+    type: Schema.Types.ObjectId,
+    ref: "Genre",
     required: true,
   },
 
@@ -47,6 +49,8 @@ const gameSchema = new Schema<IGame>({
 });
 
 const Game = model("Game", gameSchema);
+
+Game.createIndexes();
 
 function validateGame(game: IGame) {
   const schema = Joi.object({
