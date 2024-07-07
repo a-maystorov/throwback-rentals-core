@@ -1,15 +1,12 @@
 import { Request, Router } from "express";
 import validateObjectId from "../middleware/validateObjectId";
-import { Genre, validateGenre } from "../models/genre";
+import { Genre, IGenre, validateGenre } from "../models/genre";
 
 interface GenreRequest extends Request {
   params: {
     id: string;
   };
-
-  body: {
-    name: string;
-  };
+  body: IGenre;
 }
 
 const router = Router();

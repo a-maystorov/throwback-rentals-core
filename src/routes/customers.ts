@@ -1,17 +1,12 @@
 import { Request, Router } from "express";
 import validateObjectId from "../middleware/validateObjectId";
-import { Customer, validateCustomer } from "../models/customer";
+import { Customer, ICustomer, validateCustomer } from "../models/customer";
 
 interface CustomerRequest extends Request {
   params: {
     id: string;
   };
-
-  body: {
-    name: string;
-    phone: string;
-    isGold?: boolean;
-  };
+  body: ICustomer;
 }
 
 const router = Router();

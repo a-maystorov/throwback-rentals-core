@@ -1,7 +1,7 @@
 import Joi from "joi";
-import { model, Schema, Document, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
-interface IGame extends Document {
+interface IGame {
   title: string;
   genreId: Types.ObjectId;
   numberInStock: number;

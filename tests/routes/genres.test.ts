@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import request from "supertest";
-import { afterEach, describe, expect, it, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Genre, IGenre } from "../../src/models/genre";
 import { server } from "../../src/server";
 

@@ -16,7 +16,7 @@ router.get("/", async (_, res) => {
   res.send(games);
 });
 
-router.get("/:id", validateObjectId, async (req, res) => {
+router.get("/:id", validateObjectId, async (req: GameRequest, res) => {
   const game = await Game.findById(req.params.id);
 
   if (!game) {
@@ -78,10 +78,7 @@ router.put("/:id", validateObjectId, async (req: GameRequest, res) => {
     req.params.id,
     {
       title: req.body.title,
-      genre: {
-        _id: genre._id,
-        name: genre.name,
-      },
+      genreId: req.body.genreId,
       numberInStock: req.body.numberInStock,
       dailyRentalRate: req.body.dailyRentalRate,
       purchasePrice: req.body.purchasePrice,
