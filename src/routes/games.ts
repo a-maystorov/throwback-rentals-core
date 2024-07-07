@@ -12,12 +12,12 @@ interface GameRequest extends Request {
 const router = Router();
 
 router.get("/", async (_, res) => {
-  const games = await Game.find().sort({ name: 1 });
+  const games = await Game.find().populate("genre").sort({ name: 1 });
   res.send(games);
 });
 
 router.get("/:id", validateObjectId, async (req: GameRequest, res) => {
-  const game = await Game.findById(req.params.id);
+  const game = await Game.findById(req.params.id).populate("genre");
 
   if (!game) {
     return res.status(404).send("The game with the given ID was not found.");
@@ -33,7 +33,7 @@ router.post("/", async (req: GameRequest, res) => {
     return res.status(400).send(error.details[0].message);
   }
 
-  const genre = await Genre.findById(req.body.genreId);
+  const genre = await Genre.findById(req.body.genre);
 
   if (!genre) {
     return res.status(400).send("Invalid genre.");
@@ -42,7 +42,7 @@ router.post("/", async (req: GameRequest, res) => {
   try {
     const game = new Game({
       title: req.body.title,
-      genreId: req.body.genreId,
+      genre: req.body.genre,
       numberInStock: req.body.numberInStock,
       dailyRentalRate: req.body.dailyRentalRate,
       purchasePrice: req.body.purchasePrice,
@@ -50,9 +50,10 @@ router.post("/", async (req: GameRequest, res) => {
 
     await game.save();
 
-    res.send(game);
+    const populatedGame = await Game.findById(game._id).populate("genre");
+
+    res.send(populatedGame);
   } catch (err) {
-    // TODO: Send the correct response to user.
     if (err instanceof MongoError && err.code === 11000) {
       res.status(400).send("A game with the same title already exists.");
     } else {
@@ -68,7 +69,7 @@ router.put("/:id", validateObjectId, async (req: GameRequest, res) => {
     return res.status(400).send(error.details[0].message);
   }
 
-  const genre = await Genre.findById(req.body.genreId);
+  const genre = await Genre.findById(req.body.genre);
 
   if (!genre) {
     return res.status(400).send("Invalid genre.");
@@ -78,13 +79,13 @@ router.put("/:id", validateObjectId, async (req: GameRequest, res) => {
     req.params.id,
     {
       title: req.body.title,
-      genreId: req.body.genreId,
+      genre: req.body.genre,
       numberInStock: req.body.numberInStock,
       dailyRentalRate: req.body.dailyRentalRate,
       purchasePrice: req.body.purchasePrice,
     },
     { new: true }
-  );
+  ).populate("genre");
 
   if (!game) {
     return res.status(404).send("The game with the given ID was not found.");
@@ -94,7 +95,7 @@ router.put("/:id", validateObjectId, async (req: GameRequest, res) => {
 });
 
 router.delete("/:id", validateObjectId, async (req: GameRequest, res) => {
-  const game = await Game.findByIdAndDelete(req.params.id);
+  const game = await Game.findByIdAndDelete(req.params.id).populate("genre");
 
   if (!game) {
     return res.status(404).send("The game with the given ID was not found.");
