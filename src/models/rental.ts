@@ -1,13 +1,9 @@
 import Joi from "joi";
-import { Schema, model } from "mongoose";
-import { customerSchema } from "./customer";
+import { model, Schema, Types } from "mongoose";
 
 interface IRental {
-  customer: typeof customerSchema;
-  game: {
-    title: string;
-    dailyRentalRate: number;
-  };
+  customer: Types.ObjectId;
+  game: Types.ObjectId;
   dateOut: Date;
   dateReturned?: Date;
   rentalFee?: number;
@@ -15,35 +11,27 @@ interface IRental {
 
 const rentalSchema = new Schema<IRental>({
   customer: {
-    type: customerSchema,
+    type: Schema.Types.ObjectId,
+    ref: "Customer",
     required: true,
   },
+
   game: {
-    type: new Schema({
-      title: {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: 3,
-        maxlength: 255,
-      },
-      dailyRentalRate: {
-        type: Number,
-        required: true,
-        min: 0,
-        max: 255,
-      },
-    }),
+    type: Schema.Types.ObjectId,
+    ref: "Game",
     required: true,
   },
+
   dateOut: {
     type: Date,
     required: true,
     default: Date.now,
   },
+
   dateReturned: {
     type: Date,
   },
+
   rentalFee: {
     type: Number,
     min: 0,
@@ -54,8 +42,8 @@ const Rental = model("Rental", rentalSchema);
 
 function validateRental(rental: IRental) {
   const schema = Joi.object({
-    customerId: Joi.string().required(),
-    gameId: Joi.string().required(),
+    customer: Joi.string().required(),
+    game: Joi.string().required(),
   });
 
   return schema.validate(rental);
