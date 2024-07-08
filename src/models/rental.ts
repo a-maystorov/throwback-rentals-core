@@ -42,8 +42,8 @@ const Rental = model("Rental", rentalSchema);
 
 function validateRental(rental: IRental) {
   const schema = Joi.object({
-    customer: Joi.string().required(),
-    game: Joi.string().required(),
+    customer: Joi.string().hex().length(24).required(),
+    game: Joi.string().hex().length(24).required(),
   });
 
   return schema.validate(rental);

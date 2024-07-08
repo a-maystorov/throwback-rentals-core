@@ -51,7 +51,7 @@ const Game = model("Game", gameSchema);
 function validateGame(game: IGame) {
   const schema = Joi.object<IGame>({
     title: Joi.string().min(3).max(255).required(),
-    genre: Joi.string().required(),
+    genre: Joi.string().hex().length(24).required(),
     numberInStock: Joi.number().min(0).max(255).required(),
     dailyRentalRate: Joi.number().min(0).max(255).required(),
     purchasePrice: Joi.number().min(0).max(255).required(),
