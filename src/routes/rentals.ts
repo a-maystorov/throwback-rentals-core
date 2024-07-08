@@ -1,4 +1,5 @@
 import express, { Request } from "express";
+import { startSession } from "mongoose";
 import validateObjectId from "../middleware/validateObjectId";
 import { Customer } from "../models/customer";
 import { Game } from "../models/game";
@@ -27,61 +28,67 @@ router.get("/", async (_, res) => {
 });
 
 router.post("/", async (req: RentalRequest, res) => {
-  const { error } = validateRental(req.body);
+  const session = await startSession();
+  session.startTransaction();
 
-  if (error) {
-    return res.status(400).send(error.details[0].message);
-  }
+  try {
+    const { error } = validateRental(req.body);
 
-  const customer = await Customer.findById(req.body.customer);
+    if (error) {
+      return res.status(400).send(error.details[0].message);
+    }
 
-  if (!customer) {
-    return res.status(400).send("Invalid customer.");
-  }
+    const customer = await Customer.findById(req.body.customer).session(session);
 
-  const game = await Game.findById(req.body.game).populate("genre");
+    if (!customer) {
+      return res.status(400).send("Invalid customer.");
+    }
 
-  if (!game) {
-    return res.status(400).send("Invalid game.");
-  }
+    const game = await Game.findById(req.body.game).session(session).populate("genre");
 
-  if (game.numberInStock === 0) {
-    return res.status(400).send("Game not in stock.");
-  }
+    if (!game) {
+      return res.status(400).send("Invalid game.");
+    }
 
-  let rental = new Rental({
-    customer: {
-      _id: customer._id,
-      name: customer.name,
-      phone: customer.phone,
-    },
+    if (game.numberInStock === 0) {
+      return res.status(400).send("Game not in stock.");
+    }
 
-    game: {
-      _id: game._id,
-      title: game.title,
-      dailyRentalRate: game.dailyRentalRate,
-      genre: game.genre,
-    },
-  });
-
-  await Game.updateOne(
-    { _id: rental.game._id },
-    { $inc: { numberInStock: -1 } }
-  );
-
-  await rental.save();
-
-  const populatedRental = await Rental.findById(rental._id)
-    .populate("customer")
-    .populate({
-      path: "game",
-      populate: {
-        path: "genre",
-        model: "Genre",
+    const rental = new Rental({
+      customer: {
+        _id: customer._id,
+        name: customer.name,
+        phone: customer.phone,
+      },
+      game: {
+        _id: game._id,
+        title: game.title,
+        dailyRentalRate: game.dailyRentalRate,
+        genre: game.genre,
       },
     });
 
-  return res.send(populatedRental);
+    await Game.updateOne({ _id: game._id }, { $inc: { numberInStock: -1 } }, { session });
+    await rental.save({ session });
+    await session.commitTransaction();
+
+    const populatedRental = await Rental.findById(rental._id)
+      .populate("customer")
+      .populate({
+        path: "game",
+        populate: {
+          path: "genre",
+          model: "Genre",
+        },
+      });
+
+    return res.send(populatedRental);
+  } catch (error) {
+    await session.abortTransaction();
+    return res.status(500).send("Transaction aborted. Error: " + error);
+  } finally {
+    session.endSession();
+  }
 });
 
 router.get("/:id", validateObjectId, async (req: RentalRequest, res) => {
