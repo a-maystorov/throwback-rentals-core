@@ -1,4 +1,4 @@
-import express, { Request } from "express";
+import { Request, Router } from "express";
 import { startSession } from "mongoose";
 import validateObjectId from "../middleware/validateObjectId";
 import { Customer } from "../models/customer";
@@ -10,7 +10,7 @@ interface RentalRequest extends Request {
   body: IRental;
 }
 
-const router = express.Router();
+const router = Router();
 
 router.get("/", async (_, res) => {
   const rentals = await Rental.find()
