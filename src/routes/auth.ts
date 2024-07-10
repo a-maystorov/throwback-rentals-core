@@ -3,16 +3,9 @@ import express, { Request, Response } from "express";
 import Joi from "joi";
 import { IUser, User } from "../models/user";
 
-interface IAuthRequest extends Request {
-  body: {
-    email: string;
-    password: string;
-  };
-}
-
 const router = express.Router();
 
-router.post("/", async (req: IAuthRequest, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
   const { error } = validateAuth(req.body);
 
   if (error) {
@@ -35,7 +28,7 @@ router.post("/", async (req: IAuthRequest, res: Response) => {
   res.header("x-auth-token", token).header("access-control-expose-headers", "x-auth-token").send(token);
 });
 
-function validateAuth(req: IAuthRequest["body"]) {
+function validateAuth(req: Request) {
   const schema = Joi.object({
     email: Joi.string().min(5).max(255).required().email(),
     password: Joi.string().min(5).max(255).required(),

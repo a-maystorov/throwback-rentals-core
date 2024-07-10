@@ -1,18 +1,15 @@
-import { Request, Router } from "express";
+import { Request, Response, Router } from "express";
 import { startSession } from "mongoose";
+import admin from "../middleware/admin";
+import auth from "../middleware/auth";
 import validateObjectId from "../middleware/validateObjectId";
 import { Customer } from "../models/customer";
 import { Game } from "../models/game";
-import { IRental, Rental, validateRental } from "../models/rental";
-
-interface RentalRequest extends Request {
-  params: { id: string };
-  body: IRental;
-}
+import { Rental, validateRental } from "../models/rental";
 
 const router = Router();
 
-router.get("/", async (_, res) => {
+router.get("/", auth, async (_, res) => {
   const rentals = await Rental.find()
     .populate("customer")
     .populate({
@@ -27,7 +24,7 @@ router.get("/", async (_, res) => {
   res.send(rentals);
 });
 
-router.post("/", async (req: RentalRequest, res) => {
+router.post("/", auth, async (req: Request, res: Response) => {
   const session = await startSession();
   session.startTransaction();
 
@@ -91,7 +88,7 @@ router.post("/", async (req: RentalRequest, res) => {
   }
 });
 
-router.get("/:id", validateObjectId, async (req: RentalRequest, res) => {
+router.get("/:id", [auth, validateObjectId], async (req: Request, res: Response) => {
   const rental = await Rental.findById(req.params.id)
     .populate("customer")
     .populate({
@@ -109,7 +106,7 @@ router.get("/:id", validateObjectId, async (req: RentalRequest, res) => {
   res.send(rental);
 });
 
-router.delete("/:id", validateObjectId, async (req: RentalRequest, res) => {
+router.delete("/:id", [auth, admin, validateObjectId], async (req: Request, res: Response) => {
   const rental = await Rental.findByIdAndDelete(req.params.id)
     .populate("customer")
     .populate({

@@ -1,11 +1,7 @@
-import { Request, Response, NextFunction } from "express";
-import { verify, JwtPayload } from "jsonwebtoken";
+import { NextFunction, Request, Response } from "express";
+import { verify } from "jsonwebtoken";
 
-interface AuthRequest extends Request {
-  user?: JwtPayload | string;
-}
-
-const auth = (req: AuthRequest, res: Response, next: NextFunction) => {
+const auth = (req: Request, res: Response, next: NextFunction) => {
   const token = req.header("x-auth-token");
 
   if (!token) {
@@ -14,7 +10,7 @@ const auth = (req: AuthRequest, res: Response, next: NextFunction) => {
 
   try {
     const decoded = verify(token, process.env.JWT_KEY as string);
-    req.user = decoded;
+    req.body.user = decoded;
 
     next();
   } catch (ex) {

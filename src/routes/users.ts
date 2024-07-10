@@ -4,18 +4,14 @@ import _ from "lodash";
 import auth from "../middleware/auth";
 import { User, validateUser } from "../models/user";
 
-interface IUsersRequest extends Request {
-  user?: InstanceType<typeof User>;
-}
-
 const router = Router();
 
-router.get("/me", auth, async (req: IUsersRequest, res: Response) => {
-  if (!req.user) {
+router.get("/me", auth, async (req: Request, res: Response) => {
+  if (!req.body.user) {
     return res.status(401).send("Access denied. No user information found.");
   }
 
-  const user = await User.findById(req.user._id).select("-password");
+  const user = await User.findById(req.body.user._id).select("-password");
 
   res.send(user);
 });

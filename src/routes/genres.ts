@@ -1,13 +1,8 @@
-import { Request, Router } from "express";
+import { Request, Response, Router } from "express";
 import validateObjectId from "../middleware/validateObjectId";
 import { Genre, IGenre, validateGenre } from "../models/genre";
-
-interface GenreRequest extends Request {
-  params: {
-    id: string;
-  };
-  body: IGenre;
-}
+import auth from "../middleware/auth";
+import admin from "../middleware/admin";
 
 const router = Router();
 
@@ -16,7 +11,7 @@ router.get("/", async (_, res) => {
   res.send(genres);
 });
 
-router.get("/:id", validateObjectId, async (req: GenreRequest, res) => {
+router.get("/:id", [auth, validateObjectId], async (req: Request, res: Response) => {
   const genre = await Genre.findById(req.params.id);
 
   if (!genre) {
@@ -26,7 +21,7 @@ router.get("/:id", validateObjectId, async (req: GenreRequest, res) => {
   res.send(genre);
 });
 
-router.post("/", async (req: GenreRequest, res) => {
+router.post("/", auth, async (req: Request, res: Response) => {
   const { error } = validateGenre(req.body);
 
   if (error) {
@@ -39,18 +34,14 @@ router.post("/", async (req: GenreRequest, res) => {
   res.send(genre);
 });
 
-router.put("/:id", validateObjectId, async (req: GenreRequest, res) => {
+router.put("/:id", [auth, validateObjectId], async (req: Request, res: Response) => {
   const { error } = validateGenre(req.body);
 
   if (error) {
     return res.status(400).send(error.details[0].message);
   }
 
-  const genre = await Genre.findByIdAndUpdate(
-    req.params.id,
-    { name: req.body.name },
-    { new: true }
-  );
+  const genre = await Genre.findByIdAndUpdate(req.params.id, { name: req.body.name }, { new: true });
 
   if (!genre) {
     return res.status(404).send("The genre with the given ID was not found.");
@@ -59,7 +50,7 @@ router.put("/:id", validateObjectId, async (req: GenreRequest, res) => {
   res.send(genre);
 });
 
-router.delete("/:id", validateObjectId, async (req: GenreRequest, res) => {
+router.delete("/:id", [auth, admin, validateObjectId], async (req: Request, res: Response) => {
   const genre = await Genre.findByIdAndDelete(req.params.id);
 
   if (!genre) {

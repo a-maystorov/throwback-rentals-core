@@ -1,13 +1,10 @@
-import { Request, Router } from "express";
+import { Request, Response, Router } from "express";
 import { MongoError } from "mongodb";
+import admin from "../middleware/admin";
+import auth from "../middleware/auth";
 import validateObjectId from "../middleware/validateObjectId";
-import { Game, IGame, validateGame } from "../models/game";
+import { Game, validateGame } from "../models/game";
 import { Genre } from "../models/genre";
-
-interface GameRequest extends Request {
-  params: { id: string };
-  body: IGame;
-}
 
 const router = Router();
 
@@ -16,7 +13,7 @@ router.get("/", async (_, res) => {
   res.send(games);
 });
 
-router.get("/:id", validateObjectId, async (req: GameRequest, res) => {
+router.get("/:id", [auth, validateObjectId], async (req: Request, res: Response) => {
   const game = await Game.findById(req.params.id).populate("genre");
 
   if (!game) {
@@ -26,7 +23,7 @@ router.get("/:id", validateObjectId, async (req: GameRequest, res) => {
   res.send(game);
 });
 
-router.post("/", async (req: GameRequest, res) => {
+router.post("/", auth, async (req: Request, res) => {
   const { error } = validateGame(req.body);
 
   if (error) {
@@ -62,7 +59,7 @@ router.post("/", async (req: GameRequest, res) => {
   }
 });
 
-router.put("/:id", validateObjectId, async (req: GameRequest, res) => {
+router.put("/:id", [auth, validateObjectId], async (req: Request, res: Response) => {
   const { error } = validateGame(req.body);
 
   if (error) {
@@ -94,7 +91,7 @@ router.put("/:id", validateObjectId, async (req: GameRequest, res) => {
   res.send(game);
 });
 
-router.delete("/:id", validateObjectId, async (req: GameRequest, res) => {
+router.delete("/:id", [auth, admin, validateObjectId], async (req: Request, res: Response) => {
   const game = await Game.findByIdAndDelete(req.params.id).populate("genre");
 
   if (!game) {
