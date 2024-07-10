@@ -1,5 +1,6 @@
 import Joi from "joi";
-import { model, Schema, Types } from "mongoose";
+import moment from "moment";
+import { model, Schema, Types, Document, Model } from "mongoose";
 
 interface IRental {
   customer: Types.ObjectId;
@@ -9,7 +10,15 @@ interface IRental {
   rentalFee?: number;
 }
 
-const rentalSchema = new Schema<IRental>({
+interface IRentalDocument extends IRental, Document {
+  return(): void;
+}
+
+interface IRentalModel extends Model<IRentalDocument> {
+  lookup(customerId: Types.ObjectId, gameId: Types.ObjectId): Promise<IRentalDocument | null>;
+}
+
+const rentalSchema = new Schema<IRentalDocument, IRentalModel>({
   customer: {
     type: Schema.Types.ObjectId,
     ref: "Customer",
@@ -38,7 +47,22 @@ const rentalSchema = new Schema<IRental>({
   },
 });
 
-const Rental = model("Rental", rentalSchema);
+rentalSchema.statics.lookup = function (customerId: Types.ObjectId, gameId: Types.ObjectId) {
+  return this.findOne({
+    customer: customerId,
+    game: gameId,
+  });
+};
+
+rentalSchema.methods.return = function () {
+  this.dateReturned = new Date();
+
+  const rentalDays = moment().diff(this.dateOut, "days");
+
+  this.rentalFee = rentalDays * this.game.dailyRentalRate;
+};
+
+const Rental = model<IRentalDocument, IRentalModel>("Rental", rentalSchema);
 
 function validateRental(rental: IRental) {
   const schema = Joi.object({
@@ -49,4 +73,4 @@ function validateRental(rental: IRental) {
   return schema.validate(rental);
 }
 
-export { IRental, Rental, rentalSchema, validateRental };
+export { IRental, IRentalDocument, Rental, rentalSchema, validateRental };
