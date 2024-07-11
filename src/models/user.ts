@@ -1,16 +1,21 @@
 import Joi from "joi";
 import { sign } from "jsonwebtoken";
-import { Schema, model } from "mongoose";
+import { Model, Schema, model } from "mongoose";
 
 interface IUser {
   username: string;
   email: string;
   password: string;
   isAdmin?: boolean;
+}
+
+interface IUserMethods {
   generateAuthToken(): string;
 }
 
-const userSchema = new Schema<IUser>({
+type UserModel = Model<IUser, {}, IUserMethods>;
+
+const userSchema = new Schema<IUser, UserModel, IUserMethods>({
   username: {
     type: String,
     required: true,
@@ -39,11 +44,11 @@ const userSchema = new Schema<IUser>({
   },
 });
 
-userSchema.methods.generateAuthToken = function () {
+userSchema.method("generateAuthToken", function generateAuthToken() {
   const token = sign(
     {
       _id: this._id,
-      name: this.name,
+      username: this.username,
       email: this.email,
       isAdmin: this.isAdmin,
     },
@@ -51,9 +56,9 @@ userSchema.methods.generateAuthToken = function () {
   );
 
   return token;
-};
+});
 
-const User = model("User", userSchema);
+const User = model<IUser, UserModel>("User", userSchema);
 
 function validateUser(user: IUser) {
   const schema = Joi.object<IUser>({
@@ -65,4 +70,4 @@ function validateUser(user: IUser) {
   return schema.validate(user);
 }
 
-export { IUser, User, userSchema, validateUser };
+export { User, UserModel, validateUser };
