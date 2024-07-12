@@ -2,20 +2,18 @@ import mongoose from "mongoose";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Genre, IGenre } from "../../src/models/genre";
+import { User } from "../../src/models/user";
 import { server } from "../../src/server";
 
 describe("/api/genres", () => {
   afterEach(async () => {
-    server.close();
     await Genre.deleteMany({});
+    server.close();
   });
 
   describe("GET /", () => {
     it("should return all genres", async () => {
-      await Genre.collection.insertMany([
-        { name: "genre1" },
-        { name: "genre2" },
-      ]);
+      await Genre.collection.insertMany([{ name: "genre1" }, { name: "genre2" }]);
 
       const res = await request(server).get("/api/genres");
 
@@ -54,17 +52,24 @@ describe("/api/genres", () => {
 
   describe("POST /", () => {
     let name: string;
+    let token: string;
 
     const exe = async () => {
-      return await request(server).post("/api/genres").send({ name });
+      return await request(server).post("/api/genres").set("x-auth-token", token).send({ name });
     };
 
     beforeEach(() => {
       name = "genre1";
+      token = new User().generateAuthToken();
     });
 
-    // TODO:
-    // it("should return 401 if client is not loggend in", async () => {});
+    it("should return 401 if client is not loggend in", async () => {
+      token = "";
+
+      const res = await exe();
+
+      expect(res.status).toBe(401);
+    });
 
     it("should return 400 if genre is less than 3 characters", async () => {
       name = "ab";
@@ -100,12 +105,14 @@ describe("/api/genres", () => {
 
   describe("PUT /:id", () => {
     let genre: InstanceType<typeof Genre>;
-    let newName: string;
     let id: string;
+    let newName: string;
+    let token: string;
 
     const exe = async () => {
       return await request(server)
         .put("/api/genres/" + id)
+        .set("x-auth-token", token)
         .send({ name: newName });
     };
 
@@ -115,10 +122,16 @@ describe("/api/genres", () => {
 
       id = genre._id.toHexString();
       newName = "updatedName";
+      token = new User().generateAuthToken();
     });
 
-    // TODO:
-    // it("should return 401 if client is not logged in", async () => {});
+    it("should return 401 if client is not loggend in", async () => {
+      token = "";
+
+      const res = await exe();
+
+      expect(res.status).toBe(401);
+    });
 
     it("should return 400 if genre is less than 3 characters", async () => {
       newName = "ab";
@@ -171,10 +184,12 @@ describe("/api/genres", () => {
   describe("DELETE /:id", () => {
     let genre: InstanceType<typeof Genre>;
     let id: string;
+    let token: string;
 
     const exe = async () => {
       return await request(server)
         .delete("/api/genres/" + id)
+        .set("x-auth-token", token)
         .send();
     };
 
@@ -183,10 +198,24 @@ describe("/api/genres", () => {
       await genre.save();
 
       id = genre._id.toHexString();
+      token = new User({ isAdmin: true }).generateAuthToken();
     });
 
-    // TODO:
-    // it("should return 403 if the user is not an admin", async () => {});
+    it("should return 401 if client is not loggend in", async () => {
+      token = "";
+
+      const res = await exe();
+
+      expect(res.status).toBe(401);
+    });
+
+    it("should return 403 if the user is not an admin", async () => {
+      token = new User({ isAdmin: false }).generateAuthToken();
+
+      const res = await exe();
+
+      expect(res.status).toBe(403);
+    });
 
     it("should return 404 if id is invalid", async () => {
       id = "12";

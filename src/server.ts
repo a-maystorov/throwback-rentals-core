@@ -1,14 +1,11 @@
 import dotenv from "dotenv";
 import app from "./app";
 import connectDB from "./config/db";
+import jwtKeyCheck from "./config/jwtKeyCheck";
 
 dotenv.config();
 
-// TODO: export this from own file
-if (!process.env.JWT_KEY) {
-  console.error("ERROR: JWT Key is not defined.");
-  process.exit(1);
-}
+jwtKeyCheck();
 
 const PORT = process.env.PORT || 8080;
 

@@ -1,8 +1,8 @@
 import Joi from "joi";
 import { sign } from "jsonwebtoken";
-import { Model, Schema, model } from "mongoose";
+import { Document, Model, Schema, model } from "mongoose";
 
-interface IUser {
+interface IUser extends Document {
   username: string;
   email: string;
   password: string;
@@ -70,4 +70,4 @@ function validateUser(user: IUser) {
   return schema.validate(user);
 }
 
-export { User, UserModel, validateUser };
+export { User, IUser, UserModel, validateUser };

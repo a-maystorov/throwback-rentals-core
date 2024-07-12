@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import express, { Request, Response } from "express";
 import Joi from "joi";
-import { IUser, User } from "../models/user";
+import { User, UserModel } from "../models/user";
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ router.post("/", async (req: Request, res: Response) => {
     return res.status(400).send(error.details[0].message);
   }
 
-  let user: IUser | null;
+  let user: InstanceType<UserModel> | null;
 
   try {
     user = await User.findOne({ email: req.body.email });
@@ -25,7 +25,10 @@ router.post("/", async (req: Request, res: Response) => {
   }
 
   const token = user.generateAuthToken();
-  res.header("x-auth-token", token).header("access-control-expose-headers", "x-auth-token").send(token);
+  res
+    .header("x-auth-token", token)
+    .header("access-control-expose-headers", "x-auth-token")
+    .send(token);
 });
 
 function validateAuth(req: Request) {

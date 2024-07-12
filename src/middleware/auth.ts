@@ -1,5 +1,14 @@
 import { NextFunction, Request, Response } from "express";
-import { verify } from "jsonwebtoken";
+import { JwtPayload, Secret, verify } from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const SECRET_KET: Secret = process.env.JWT_KEY as string;
+
+export interface AuthenticatedRequest extends Request {
+  user: string | JwtPayload;
+}
 
 const auth = (req: Request, res: Response, next: NextFunction) => {
   const token = req.header("x-auth-token");
@@ -9,8 +18,8 @@ const auth = (req: Request, res: Response, next: NextFunction) => {
   }
 
   try {
-    const decoded = verify(token, process.env.JWT_KEY as string);
-    req.body.user = decoded;
+    const decoded = verify(token, SECRET_KET);
+    (req as AuthenticatedRequest).user = decoded;
 
     next();
   } catch (ex) {

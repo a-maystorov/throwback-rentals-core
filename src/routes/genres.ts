@@ -1,8 +1,8 @@
 import { Request, Response, Router } from "express";
-import validateObjectId from "../middleware/validateObjectId";
-import { Genre, IGenre, validateGenre } from "../models/genre";
-import auth from "../middleware/auth";
 import admin from "../middleware/admin";
+import auth from "../middleware/auth";
+import validateObjectId from "../middleware/validateObjectId";
+import { Genre, validateGenre } from "../models/genre";
 
 const router = Router();
 
@@ -11,7 +11,7 @@ router.get("/", async (_, res) => {
   res.send(genres);
 });
 
-router.get("/:id", [auth, validateObjectId], async (req: Request, res: Response) => {
+router.get("/:id", validateObjectId, async (req: Request, res: Response) => {
   const genre = await Genre.findById(req.params.id);
 
   if (!genre) {
@@ -41,7 +41,11 @@ router.put("/:id", [auth, validateObjectId], async (req: Request, res: Response)
     return res.status(400).send(error.details[0].message);
   }
 
-  const genre = await Genre.findByIdAndUpdate(req.params.id, { name: req.body.name }, { new: true });
+  const genre = await Genre.findByIdAndUpdate(
+    req.params.id,
+    { name: req.body.name },
+    { new: true }
+  );
 
   if (!genre) {
     return res.status(404).send("The genre with the given ID was not found.");
