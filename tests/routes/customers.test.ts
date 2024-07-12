@@ -3,6 +3,7 @@ import request from "supertest";
 import { afterEach, describe, expect, it, beforeEach } from "vitest";
 import { Customer, ICustomer } from "../../src/models/customer";
 import { server } from "../../src/server";
+import { User } from "../../src/models/user";
 
 describe("/api/customers", () => {
   afterEach(async () => {
@@ -11,42 +12,61 @@ describe("/api/customers", () => {
   });
 
   describe("GET /", () => {
-    // TODO:
-    // it("should return 401 if user is not logged in", async () => {});
+    let token: string;
 
-    // TODO: should return all customers if user is logged in
+    beforeEach(() => {
+      token = new User().generateAuthToken();
+    });
+
+    it("should return 401 if user is not logged in", async () => {
+      token = "";
+
+      const res = await request(server).get("/api/customers").set("x-auth-token", token);
+
+      expect(res.status).toBe(401);
+    });
+
     it("should return all customers", async () => {
       await Customer.collection.insertMany([
         { name: "customer1", phone: "123456" },
         { name: "customer2", phone: "654321" },
       ]);
 
-      const res = await request(server).get("/api/customers");
+      const res = await request(server).get("/api/customers").set("x-auth-token", token);
 
       expect(res.status).toBe(200);
       expect(res.body.length).toBe(2);
       expect(
-        res.body.some(
-          (c: ICustomer) => c.name === "customer1" && c.phone === "123456"
-        )
+        res.body.some((c: ICustomer) => c.name === "customer1" && c.phone === "123456")
       ).toBeTruthy();
       expect(
-        res.body.some(
-          (c: ICustomer) => c.name === "customer2" && c.phone === "654321"
-        )
+        res.body.some((c: ICustomer) => c.name === "customer2" && c.phone === "654321")
       ).toBeTruthy();
     });
   });
 
   describe("GET /:id", () => {
-    // TODO:
-    // it("should return 401 if user is not logged in", async () => {});
+    let token: string;
+
+    beforeEach(() => {
+      token = new User().generateAuthToken();
+    });
+
+    it("should return 401 if user is not logged in", async () => {
+      token = "";
+
+      const res = await request(server).get("/api/customers").set("x-auth-token", token);
+
+      expect(res.status).toBe(401);
+    });
 
     it("should return a customer if valid id is passed", async () => {
       const customer = new Customer({ name: "customer1", phone: "123456" });
       await customer.save();
 
-      const res = await request(server).get("/api/customers/" + customer._id);
+      const res = await request(server)
+        .get("/api/customers/" + customer._id)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty("name", customer.name);
@@ -54,7 +74,7 @@ describe("/api/customers", () => {
     });
 
     it("should return 404 if invalid id is passed", async () => {
-      const res = await request(server).get("/api/customers/1");
+      const res = await request(server).get("/api/customers/1").set("x-auth-token", token);
 
       expect(res.status).toBe(404);
     });
@@ -62,7 +82,9 @@ describe("/api/customers", () => {
     it("should return 404 if no customer with the given id exists", async () => {
       const id = new mongoose.Types.ObjectId();
 
-      const res = await request(server).get("/api/customers/" + id);
+      const res = await request(server)
+        .get("/api/customers/" + id)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(404);
     });
@@ -72,19 +94,29 @@ describe("/api/customers", () => {
     let name: string;
     let phone: string;
     let isGold: boolean;
+    let token: string;
 
     const exe = async () => {
-      return await request(server).post("/api/customers").send({ name, phone });
+      return await request(server)
+        .post("/api/customers")
+        .set("x-auth-token", token)
+        .send({ name, phone, isGold });
     };
 
     beforeEach(() => {
       name = "customer1";
       phone = "123456";
       isGold = false;
+      token = new User().generateAuthToken();
     });
 
-    // TODO:
-    // it("should return 401 if user is not loggend in", async () => {});
+    it("should return 401 if user is not logged in", async () => {
+      token = "";
+
+      const res = await exe();
+
+      expect(res.status).toBe(401);
+    });
 
     it("should return 400 if name is less than 3 characters", async () => {
       name = "ab";
@@ -142,10 +174,12 @@ describe("/api/customers", () => {
     let newPhone: string;
     let newGoldStatus: boolean;
     let id: string;
+    let token: string;
 
     const exe = async () => {
       return await request(server)
         .put("/api/customers/" + id)
+        .set("x-auth-token", token)
         .send({ name: newName, phone: newPhone, isGold: newGoldStatus });
     };
 
@@ -162,10 +196,16 @@ describe("/api/customers", () => {
       newName = "updatedName";
       newPhone = "654321";
       newGoldStatus = true;
+      token = new User().generateAuthToken();
     });
 
-    // TODO:
-    // it("should return 401 if user is not logged in", async () => {});
+    it("should return 401 if user is not logged in", async () => {
+      token = "";
+
+      const res = await exe();
+
+      expect(res.status).toBe(401);
+    });
 
     it("should return 400 if name is less than 3 characters", async () => {
       newName = "ab";
@@ -238,10 +278,12 @@ describe("/api/customers", () => {
   describe("DELETE /:id", () => {
     let customer: InstanceType<typeof Customer>;
     let id: string;
+    let token: string;
 
     const exe = async () => {
       return await request(server)
         .delete("/api/customers/" + id)
+        .set("x-auth-token", token)
         .send();
     };
 
@@ -250,10 +292,24 @@ describe("/api/customers", () => {
       await customer.save();
 
       id = customer._id.toHexString();
+      token = new User({ isAdmin: true }).generateAuthToken();
     });
 
-    // TODO:
-    // it("should return 403 if the user is not an admin", async () => {});
+    it("should return 401 if user is not logged in", async () => {
+      token = "";
+
+      const res = await exe();
+
+      expect(res.status).toBe(401);
+    });
+
+    it("should return 403 if the user is not an admin", async () => {
+      token = new User({ isAdmin: false }).generateAuthToken();
+
+      const res = await exe();
+
+      expect(res.status).toBe(403);
+    });
 
     it("should return 404 if id is invalid", async () => {
       id = "1";
