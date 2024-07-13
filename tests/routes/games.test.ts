@@ -2,7 +2,7 @@ import request from "supertest";
 import { Genre, IGenre } from "../../src/models/genre";
 import { User } from "../../src/models/user";
 import { Game, IGame } from "../../src/models/game";
-import mongoose, { Types } from "mongoose";
+import { Types } from "mongoose";
 import { beforeEach, afterEach, it, expect, describe } from "vitest";
 import { server } from "../../src/server";
 
@@ -117,7 +117,7 @@ describe("/api/games", () => {
     });
 
     it("should return 404 if no game with the given id exists", async () => {
-      const id = new mongoose.Types.ObjectId();
+      const id = new Types.ObjectId();
 
       const res = await request(server)
         .get("/api/games/" + id)
@@ -145,7 +145,7 @@ describe("/api/games", () => {
     beforeEach(async () => {
       token = new User().generateAuthToken();
       title = "game1";
-      genreId = new mongoose.Types.ObjectId().toHexString();
+      genreId = new Types.ObjectId().toHexString();
       numberInStock = 1;
       dailyRentalRate = 1;
       purchasePrice = 59.99;
@@ -264,7 +264,7 @@ describe("/api/games", () => {
     };
 
     beforeEach(async () => {
-      const genreId = new mongoose.Types.ObjectId();
+      const genreId = new Types.ObjectId();
       const genre = new Genre({ _id: genreId, name: "genre1" });
       await genre.save();
 
@@ -278,7 +278,7 @@ describe("/api/games", () => {
 
       await game.save();
 
-      const updatedGenreId = new mongoose.Types.ObjectId().toHexString();
+      const updatedGenreId = new Types.ObjectId().toHexString();
       const updatedGenre = new Genre({ _id: updatedGenreId, name: "genre2" });
       await updatedGenre.save();
 
@@ -365,7 +365,7 @@ describe("/api/games", () => {
     });
 
     it("should return 404 if game with the given id was not found", async () => {
-      id = new mongoose.Types.ObjectId();
+      id = new Types.ObjectId();
 
       const res = await exe();
 
@@ -453,7 +453,7 @@ describe("/api/games", () => {
     });
 
     it("should return 404 if no game with the given id was found", async () => {
-      id = new mongoose.Types.ObjectId();
+      id = new Types.ObjectId();
 
       const res = await exe();
 
