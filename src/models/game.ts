@@ -1,9 +1,10 @@
 import Joi from "joi";
 import { model, Schema, Types } from "mongoose";
+import { IGenre } from "./genre";
 
 interface IGame {
   title: string;
-  genre: Types.ObjectId;
+  genre: Types.ObjectId | IGenre;
   numberInStock: number;
   dailyRentalRate: number;
   purchasePrice: number;
@@ -50,7 +51,7 @@ const Game = model("Game", gameSchema);
 
 function validateGame(game: IGame) {
   const schema = Joi.object<IGame>({
-    title: Joi.string().min(3).max(255).required(),
+    title: Joi.string().min(3).max(50).required(),
     genre: Joi.string().hex().length(24).required(),
     numberInStock: Joi.number().min(0).max(255).required(),
     dailyRentalRate: Joi.number().min(0).max(255).required(),
