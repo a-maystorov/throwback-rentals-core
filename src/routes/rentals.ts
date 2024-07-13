@@ -30,19 +30,16 @@ router.post("/", auth, async (req: Request, res: Response) => {
 
   try {
     const { error } = validateRental(req.body);
-
     if (error) {
       return res.status(400).send(error.details[0].message);
     }
 
     const customer = await Customer.findById(req.body.customer).session(session);
-
     if (!customer) {
       return res.status(400).send("Invalid customer.");
     }
 
     const game = await Game.findById(req.body.game).session(session).populate("genre");
-
     if (!game) {
       return res.status(400).send("Invalid game.");
     }
@@ -51,20 +48,7 @@ router.post("/", auth, async (req: Request, res: Response) => {
       return res.status(400).send("Game not in stock.");
     }
 
-    const rental = new Rental({
-      customer: {
-        _id: customer._id,
-        name: customer.name,
-        phone: customer.phone,
-      },
-      game: {
-        _id: game._id,
-        title: game.title,
-        dailyRentalRate: game.dailyRentalRate,
-        genre: game.genre,
-      },
-    });
-
+    const rental = new Rental({ customer, game });
     await Game.updateOne({ _id: game._id }, { $inc: { numberInStock: -1 } }, { session });
     await rental.save({ session });
     await session.commitTransaction();
@@ -82,6 +66,7 @@ router.post("/", auth, async (req: Request, res: Response) => {
     return res.send(populatedRental);
   } catch (error) {
     await session.abortTransaction();
+
     return res.status(500).send("Transaction aborted. Error: " + error);
   } finally {
     session.endSession();

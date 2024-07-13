@@ -1,24 +1,29 @@
 import Joi from "joi";
 import moment from "moment";
-import { model, Schema, Types, Document, Model } from "mongoose";
+import { HydratedDocument, model, Model, Schema, Types } from "mongoose";
+import { ICustomer } from "./customer";
+import { IGame } from "./game";
 
 interface IRental {
-  customer: Types.ObjectId;
-  game: Types.ObjectId;
+  customer: Types.ObjectId | ICustomer;
+  game: Types.ObjectId | IGame;
   dateOut: Date;
   dateReturned?: Date;
   rentalFee?: number;
 }
 
-interface IRentalDocument extends IRental, Document {
-  return(): void;
+interface IRentalMethods {
+  returnRental(): void;
 }
 
-interface IRentalModel extends Model<IRentalDocument> {
-  lookup(customerId: Types.ObjectId, gameId: Types.ObjectId): Promise<IRentalDocument | null>;
+interface RentalModel extends Model<IRental, {}, IRentalMethods> {
+  lookup(
+    customerId: Types.ObjectId,
+    gameId: Types.ObjectId
+  ): Promise<HydratedDocument<IRental, IRentalMethods>>;
 }
 
-const rentalSchema = new Schema<IRentalDocument, IRentalModel>({
+const rentalSchema = new Schema<IRental, RentalModel, IRentalMethods>({
   customer: {
     type: Schema.Types.ObjectId,
     ref: "Customer",
@@ -47,22 +52,20 @@ const rentalSchema = new Schema<IRentalDocument, IRentalModel>({
   },
 });
 
-rentalSchema.statics.lookup = function (customerId: Types.ObjectId, gameId: Types.ObjectId) {
+rentalSchema.static("lookup", function lookup(customerId: Types.ObjectId, gameId: Types.ObjectId) {
   return this.findOne({
     customer: customerId,
     game: gameId,
   });
-};
+});
 
-rentalSchema.methods.return = function () {
+rentalSchema.method("returnRental", function returnRental() {
   this.dateReturned = new Date();
-
   const rentalDays = moment().diff(this.dateOut, "days");
+  this.rentalFee = rentalDays * (this.game as IGame).dailyRentalRate;
+});
 
-  this.rentalFee = rentalDays * this.game.dailyRentalRate;
-};
-
-const Rental = model<IRentalDocument, IRentalModel>("Rental", rentalSchema);
+const Rental = model<IRental, RentalModel>("Rental", rentalSchema);
 
 function validateRental(rental: IRental) {
   const schema = Joi.object({
@@ -73,4 +76,4 @@ function validateRental(rental: IRental) {
   return schema.validate(rental);
 }
 
-export { IRental, IRentalDocument, Rental, rentalSchema, validateRental };
+export { IRental, Rental, rentalSchema, validateRental };
