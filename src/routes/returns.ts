@@ -3,7 +3,7 @@ import Joi from "joi";
 import mongoose from "mongoose";
 import auth from "../middleware/auth";
 import { Game } from "../models/game";
-import { IRentalDocument, Rental } from "../models/rental";
+import { Rental } from "../models/rental";
 
 const router = Router();
 
@@ -18,20 +18,24 @@ router.post("/", auth, async (req: Request, res: Response) => {
   session.startTransaction();
 
   try {
-    const rental: IRentalDocument | null = await Rental.lookup(req.body.customerId, req.body.gameId);
+    const rental = await Rental.lookup(req.body.customerId, req.body.gameId);
 
     if (!rental) {
       await session.abortTransaction();
-      session.endSession();
+      await session.endSession();
       return res.status(404).send("Rental not found.");
+    }
+
+    if (rental.dateReturned) {
+      return res.status(400).send("Return already processed.");
     }
 
     await rental.populate("game");
 
-    rental.return();
+    rental.returnRental();
 
     await rental.save({ session });
-    await Game.updateOne({ _id: rental.game._id }, { $inc: { numberInStock: 1 } }, { session });
+    await Game.updateOne({ _id: rental.game }, { $inc: { numberInStock: 1 } }, { session });
     await session.commitTransaction();
 
     session.endSession();
