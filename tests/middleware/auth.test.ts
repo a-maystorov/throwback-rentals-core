@@ -2,7 +2,7 @@ import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Genre } from "../../src/models/genre";
 import { User } from "../../src/models/user";
-import { server } from "../../src/server";
+import server from "../../src/server";
 
 describe("auth middleware", () => {
   let token: string;
