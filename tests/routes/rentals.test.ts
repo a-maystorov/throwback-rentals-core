@@ -6,7 +6,7 @@ import { Game, IGame } from "../../src/models/game";
 import { Genre } from "../../src/models/genre";
 import { IRental, Rental } from "../../src/models/rental";
 import { User } from "../../src/models/user";
-import { server } from "../../src/server";
+import server from "../../src/server";
 
 describe("/api/rentals", () => {
   afterEach(async () => {

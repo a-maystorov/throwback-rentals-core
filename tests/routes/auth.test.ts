@@ -1,8 +1,8 @@
-import request from "supertest";
 import bcrypt from "bcrypt";
+import request from "supertest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { User } from "../../src/models/user";
-import { beforeEach, afterEach, it, expect, describe } from "vitest";
-import { server } from "../../src/server";
+import server from "../../src/server";
 
 describe("/api/auth", () => {
   let user: InstanceType<typeof User>;

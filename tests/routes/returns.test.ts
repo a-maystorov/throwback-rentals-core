@@ -1,13 +1,13 @@
 import moment from "moment";
 import { Types } from "mongoose";
 import request from "supertest";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Customer } from "../../src/models/customer";
 import { Game } from "../../src/models/game";
 import { Genre } from "../../src/models/genre";
 import { Rental } from "../../src/models/rental";
 import { User } from "../../src/models/user";
-import { server } from "../../src/server";
+import server from "../../src/server";
 
 describe("/api/returns", () => {
   let customerId: Types.ObjectId | string;

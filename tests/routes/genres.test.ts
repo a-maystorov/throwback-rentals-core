@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+import { Types } from "mongoose";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Genre, IGenre } from "../../src/models/genre";
 import { User } from "../../src/models/user";
-import { server } from "../../src/server";
+import server from "../../src/server";
 
 describe("/api/genres", () => {
   afterEach(async () => {
@@ -42,7 +42,7 @@ describe("/api/genres", () => {
     });
 
     it("should return 404 if no genre with the given id exists", async () => {
-      const id = new mongoose.Types.ObjectId();
+      const id = new Types.ObjectId();
 
       const res = await request(server).get("/api/genres/" + id);
 
@@ -158,7 +158,7 @@ describe("/api/genres", () => {
     });
 
     it("should return 404 if genre with the given id was not found", async () => {
-      id = new mongoose.Types.ObjectId().toHexString();
+      id = new Types.ObjectId().toHexString();
 
       const res = await exe();
 
@@ -226,7 +226,7 @@ describe("/api/genres", () => {
     });
 
     it("should return 404 if no genre with the given id was found", async () => {
-      id = new mongoose.Types.ObjectId().toHexString();
+      id = new Types.ObjectId().toHexString();
 
       const res = await exe();
 

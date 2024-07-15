@@ -1,10 +1,10 @@
+import { Types } from "mongoose";
 import request from "supertest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { Game, IGame } from "../../src/models/game";
 import { Genre, IGenre } from "../../src/models/genre";
 import { User } from "../../src/models/user";
-import { Game, IGame } from "../../src/models/game";
-import { Types } from "mongoose";
-import { beforeEach, afterEach, it, expect, describe } from "vitest";
-import { server } from "../../src/server";
+import server from "../../src/server";
 
 describe("/api/games", () => {
   afterEach(async () => {
